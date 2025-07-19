@@ -21,3 +21,9 @@ void LedManager::setAllTo(Color color)
 
     FastLED.show();
 }
+
+void LedManager::setLed(int index, Color color)
+{
+
+    leds[index].setRGB(color.red, color.green, color.blue);
+}

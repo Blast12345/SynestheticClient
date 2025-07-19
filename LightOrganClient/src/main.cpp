@@ -4,6 +4,7 @@
 #include "SocketManager.h"
 #include "WifiManager.h"
 #include "LedManager.h"
+#include "Color.h"
 
 // State
 LedManager ledManager;
@@ -11,6 +12,8 @@ WifiManager wifiManager;
 SocketManager socketManager;
 ColorParser colorParser;
 bool isNewConnection = true;
+unsigned long lastConnectAttempt = 0;       // Tracks the last time connectToWifi was called
+const unsigned long connectInterval = 1000; // Interval in milliseconds (1 second)
 
 // Setup
 void configureSerialOutput()
@@ -40,17 +43,48 @@ void connectToWifi()
 
 void updateLedsUsingFallback()
 {
-  for (int colorStep = 0; colorStep < 256; colorStep++)
+  static uint8_t tickOffset = 0;
+
+  for (int segment = 0; segment < segments; ++segment)
   {
-    Color color;
-    color.red = sin(colorStep * 0.024) * 127 + 128;
-    color.green = sin(colorStep * 0.024 + 2 * PI / 3) * 127 + 128;
-    color.blue = sin(colorStep * 0.024 + 4 * PI / 3) * 127 + 128;
+    // Calculate the color offset for the segment
+    uint8_t hueOffset = (segment * 25 + tickOffset) % 256;
 
-    ledManager.setAllTo(color);
+    for (int i = 0; i < segmentSize; ++i)
+    {
+      // Calculate the LED index within the array
+      int ledIndex = segment * segmentSize + i;
 
-    delay(10); // delay for visual effect, adjust as needed
+      // Set the LED color with the hue offset
+      CHSV hsvColor = CHSV(hueOffset, 255, 255); // Full saturation and brightness
+      CRGB rgbColor;
+      hsv2rgb_rainbow(hsvColor, rgbColor);
+
+      Color color = Color(rgbColor.red, rgbColor.green, rgbColor.blue);
+
+      ledManager.setLed(ledIndex, color);
+    }
   }
+
+  FastLED.show();
+
+  delay(10);
+
+  tickOffset = (tickOffset + 1) % 256;
+  Serial.println("Tick offset: ");
+  Serial.println(tickOffset);
+
+  // for (int colorStep = 0; colorStep < 256; colorStep++)
+  // {
+  //   Color color;
+  //   color.red = sin(colorStep * 0.024) * 127 + 128;
+  //   color.green = sin(colorStep * 0.024 + 2 * PI / 3) * 127 + 128;
+  //   color.blue = sin(colorStep * 0.024 + 4 * PI / 3) * 127 + 128;
+
+  //   ledManager.setAllTo(color);
+
+  //   delay(10); // delay for visual effect, adjust as needed
+  // }
 }
 
 void handleInitialConnectionIfNeeded()
@@ -71,7 +105,14 @@ void loop()
 {
   if (wifiManager.isDisconnected())
   {
-    connectToWifi();
+    unsigned long currentMillis = millis();
+
+    if (currentMillis - lastConnectAttempt >= connectInterval)
+    {
+      lastConnectAttempt = currentMillis; // Update the last attempt time
+      connectToWifi();                    // Call the function
+    }
+
     updateLedsUsingFallback();
     isNewConnection = true;
   }

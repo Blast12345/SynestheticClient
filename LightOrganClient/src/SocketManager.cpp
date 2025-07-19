@@ -1,6 +1,8 @@
 #include "SocketManager.h"
+#include "WifiManager.h"
 
 WiFiUDP udp;
+WifiManager wifiManager2;
 
 void SocketManager::openPort(const int port)
 {
@@ -20,7 +22,7 @@ std::string SocketManager::getNextString()
 
 void SocketManager::getNextPacket(char *packet)
 {
-    while (true)
+    while (wifiManager2.isConnected())
     {
         int packetSize = udp.parsePacket();
 

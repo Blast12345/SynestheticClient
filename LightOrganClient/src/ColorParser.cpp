@@ -36,18 +36,10 @@ std::vector<uint8_t> ColorParser::getColorChannels(std::string message)
 
 Color ColorParser::getColor(std::vector<uint8_t> colorChannels)
 {
-    Color newColor;
-    newColor.red = colorChannels[0];
-    newColor.green = colorChannels[1];
-    newColor.blue = colorChannels[2];
-    return newColor;
+    return Color(colorChannels[0], colorChannels[1], colorChannels[2]);
 }
 
 Color ColorParser::createDefaultColor()
 {
-    Color newColor;
-    newColor.red = 0;
-    newColor.green = 0;
-    newColor.blue = 0;
-    return newColor;
+    return Color(0, 0, 0);
 }
