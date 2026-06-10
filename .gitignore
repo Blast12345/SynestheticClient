@@ -1,3 +1,9 @@
 .DS_Store
 LightOrganClient/src/Secrets.h
 LightOrganClient/__pycache__
+
+# Idea
+.idea/*
+!.idea/codeStyles/
+!.idea/dictionaries/
+!.idea/inspectionProfiles/
