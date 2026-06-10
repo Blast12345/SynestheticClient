@@ -1,88 +1,61 @@
-#include "Configuration.h"
 #include "helpers/Wait.h"
-#include "networking/LOServer.h"
-#include "networking/Network.h"
-#include <esp_wifi.h>
+#include <WiFi.h>
+#include "network/Network.h"
+#include "Configuration.h"
+#include "colors/ColorParser.h"
 
 #include <esp_now.h>
 #include <queue>
+#include <ArduinoJson.h>
 
-Network network(networkCredentials);
-LOServer server(serverPort);
+constexpr unsigned DEBUG_DELAY = 5000;
+constexpr unsigned WIFI_WARMUP = 1000;
 
-void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
-{
-  Serial.println("Received");
+Network *network;
 
-  // Convert incoming data to a String
-  String receivedData = String((char *)incomingData).substring(0, len);
+void onMessageReceived(const String &string, const MacAddress &mac) {
+    JsonDocument json;
+    deserializeJson(json, string);
 
-  // Print the received data
-  Serial.println("Data Received: " + receivedData);
+    // assumes its a color
+    uint8_t r = json["params"]["r"];
+    uint8_t g = json["params"]["g"];
+    uint8_t b = json["params"]["b"];
+
+    Color nextColor = Color(r, g, b);
+    // Color nextColor = ColorParser::getColor(string);
+    Serial.println("Color parsed...");
+    ledChain.setAllTo(nextColor);
 }
 
-void setup()
-{
-  Serial.begin(baudRate);
-  waitOneSecond(); // Give the device some time to warm up or weird things tend to happen.
+void setup() {
+#ifdef DEBUG
+    delay(DEBUG_DELAY);
+#endif
 
-  Serial.println("Baud rate set to: " + String(baudRate));
+    Serial.begin(BAUD_RATE);
+    Serial.println("Baud rate set to: " + String(BAUD_RATE));
 
-  // ledChain.setup();
+    ledChain.setup(); // ideally this should be done in the constructor, but I don't think it works that way.
 
-  Serial.println("Setup complete.");
+    WiFi.mode(WIFI_STA); // NOLINT
 
-  WiFi.mode(WIFI_STA);
+    /*
+     * TODO: ESP-NOW will init successfully without this, but the peer fails to add without.
+     * The delay also must be directly in the setup method; including it in the constructor does not seem to work.
+     * This is very strange and my research has not yielded any results. Perhaps this is a bug in the ESP-NOW library?
+    */
+    delay(WIFI_WARMUP);
 
-  // Init ESP-NOW
-  if (esp_now_init() != ESP_OK)
-  {
-    Serial.println("Error initializing ESP-NOW");
-    return;
-  }
-  else
-  {
-    Serial.println("ESP-NOW initialized successfully");
-  }
+    WiFi.mode(WIFI_STA);
 
-  if (esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv)) != ESP_OK)
-  {
-    Serial.println("Error registering ESP-NOW receive callback");
-  }
-  else
-  {
-    Serial.println("ESP-NOW receive callback registered successfully");
-  }
+    network = new Network(onMessageReceived);
+
+    Serial.println("Setup complete.");
 }
 
 // cppcheck-suppress unusedFunction
-void loop()
-{
-  // waitOneSecond(); // Give the device some time to warm up or weird things tend to happen.
-  // Serial.println("Looping...");
-  // if (network.isDisconnected())
-  // {
-  //   network.connect();
-  //   waitOneSecond(); // Give the device time to be assigned an IP and whatnot.
-  //   network.printConnectionInformation();
-  // }
-
-  // if (network.isConnected() && server.isNotListening())
-  // {
-  //   try
-  //   {
-  //     server.beginListening();
-  //   }
-  //   catch (const std::runtime_error &e)
-  //   {
-  //     Serial.println("Error: " + String(e.what()));
-  //     waitOneSecond();
-  //   }
-  // }
-
-  // if (network.isConnected() && server.isListening())
-  // {
-  //   server.onNextColor([](Color color)
-  //                      { ledChain.setAllTo(color); });
-  // }
+void loop() {
+    //    delay(1000);
+    //    Serial.println("Looping...");
 }

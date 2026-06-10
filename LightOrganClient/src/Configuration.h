@@ -1,10 +1,8 @@
 #pragma once
 
-#include "Secrets.h"
 #include "helpers/measurements/Amperage.h"
 #include "helpers/measurements/Voltage.h"
 #include "leds/LedChain.h"
-#include "networking/NetworkCredentials.h"
 
 // TODO: Maybe have a separate set of classes for segments/chains that prepare results for the LedLibrary.
 
@@ -19,7 +17,3 @@ LedChain<ledPin> ledChain(
     ledCount,
     Voltage(5.0),
     Amperage(1.0));
-
-// Network
-constexpr unsigned int serverPort = 9999;
-const NetworkCredentials networkCredentials = {Secrets::networkSSID, Secrets::networkPassword};
