@@ -2,7 +2,6 @@
 #include <WiFi.h>
 #include "network/Network.h"
 #include "Configuration.h"
-#include "colors/ColorParser.h"
 
 #include <esp_now.h>
 #include <queue>
@@ -23,8 +22,6 @@ void onMessageReceived(const String &string, const MacAddress &mac) {
     uint8_t b = json["params"]["b"];
 
     Color nextColor = Color(r, g, b);
-    // Color nextColor = ColorParser::getColor(string);
-    Serial.println("Color parsed...");
     ledChain.setAllTo(nextColor);
 }
 
@@ -55,7 +52,4 @@ void setup() {
 }
 
 // cppcheck-suppress unusedFunction
-void loop() {
-    //    delay(1000);
-    //    Serial.println("Looping...");
-}
+void loop() {}
