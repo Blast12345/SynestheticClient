@@ -1,88 +1,43 @@
-#include "Configuration.h"
-#include "helpers/Wait.h"
-#include "networking/LOServer.h"
-#include "networking/Network.h"
-#include <esp_wifi.h>
+#include <ArduinoJson.h>
+#include <WiFi.h>
+#include "leds/LedChain.h"
+#include "network/Network.h"
 
-#include <esp_now.h>
-#include <queue>
+constexpr unsigned MONITOR_CONNECT_DELAY = 1000;
 
-Network network(networkCredentials);
-LOServer server(serverPort);
+Network *network;
+LedChain<LED_PIN> ledChain(LED_COUNT, Voltage(VOLTAGE), Amperage(AMPERAGE));
 
-void OnDataRecv(const uint8_t *mac, const uint8_t *incomingData, int len)
-{
-  Serial.println("Received");
+void onMessageReceived(const String &string, const MacAddress &mac) {
+    JsonDocument json;
+    deserializeJson(json, string);
 
-  // Convert incoming data to a String
-  String receivedData = String((char *)incomingData).substring(0, len);
+    // assumes it is a color
+    const uint8_t red = json["params"]["r"];
+    const uint8_t green = json["params"]["g"];
+    const uint8_t blue = json["params"]["b"];
 
-  // Print the received data
-  Serial.println("Data Received: " + receivedData);
+    const auto nextColor = Color(red, green, blue);
+    ledChain.setAllTo(nextColor);
 }
 
-void setup()
-{
-  Serial.begin(baudRate);
-  waitOneSecond(); // Give the device some time to warm up or weird things tend to happen.
+void setup() {
+    Serial.begin(BAUD_RATE);
 
-  Serial.println("Baud rate set to: " + String(baudRate));
+#ifdef DEBUG
+    delay(MONITOR_CONNECT_DELAY);
+#endif
 
-  // ledChain.setup();
+    Serial.println("Baud rate set to: " + String(BAUD_RATE));
 
-  Serial.println("Setup complete.");
+    ledChain.setup();
 
-  WiFi.mode(WIFI_STA);
+    WiFi.mode(WIFI_STA);
 
-  // Init ESP-NOW
-  if (esp_now_init() != ESP_OK)
-  {
-    Serial.println("Error initializing ESP-NOW");
-    return;
-  }
-  else
-  {
-    Serial.println("ESP-NOW initialized successfully");
-  }
+    network = new Network(onMessageReceived);
 
-  if (esp_now_register_recv_cb(esp_now_recv_cb_t(OnDataRecv)) != ESP_OK)
-  {
-    Serial.println("Error registering ESP-NOW receive callback");
-  }
-  else
-  {
-    Serial.println("ESP-NOW receive callback registered successfully");
-  }
+    Serial.println("Setup complete.");
 }
 
 // cppcheck-suppress unusedFunction
-void loop()
-{
-  // waitOneSecond(); // Give the device some time to warm up or weird things tend to happen.
-  // Serial.println("Looping...");
-  // if (network.isDisconnected())
-  // {
-  //   network.connect();
-  //   waitOneSecond(); // Give the device time to be assigned an IP and whatnot.
-  //   network.printConnectionInformation();
-  // }
-
-  // if (network.isConnected() && server.isNotListening())
-  // {
-  //   try
-  //   {
-  //     server.beginListening();
-  //   }
-  //   catch (const std::runtime_error &e)
-  //   {
-  //     Serial.println("Error: " + String(e.what()));
-  //     waitOneSecond();
-  //   }
-  // }
-
-  // if (network.isConnected() && server.isListening())
-  // {
-  //   server.onNextColor([](Color color)
-  //                      { ledChain.setAllTo(color); });
-  // }
-}
+void loop() {}

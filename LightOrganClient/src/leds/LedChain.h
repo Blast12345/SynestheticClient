@@ -1,9 +1,9 @@
 #pragma once
 
+#include <FastLED.h>
 #include "colors/Color.h"
 #include "helpers/measurements/Amperage.h"
 #include "helpers/measurements/Voltage.h"
-#include <FastLED.h>
 
 template <unsigned int PIN>
 class LedChain
