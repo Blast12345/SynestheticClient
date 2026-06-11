@@ -1,9 +1,14 @@
 .DS_Store
-LightOrganClient/src/Secrets.h
-LightOrganClient/__pycache__
 
-# Idea
+# PlatformIO
+.pio
+
+# Intellij
 .idea/*
 !.idea/codeStyles/
 !.idea/dictionaries/
 !.idea/inspectionProfiles/
+
+# VS Code
+.vscode/*
+!.vscode/extensions.json
