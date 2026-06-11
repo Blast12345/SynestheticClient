@@ -1,7 +1,6 @@
 #include <ArduinoJson.h>
 #include <WiFi.h>
-#include "Configuration.h"
-#include "helpers/Wait.h"
+#include "leds/LedChain.h"
 #include "network/Network.h"
 
 constexpr unsigned MONITOR_CONNECT_DELAY = 1000;
